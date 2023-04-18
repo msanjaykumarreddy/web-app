@@ -1,0 +1,18 @@
+image:
+  repository: mysql
+  tag: latest
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 3306
+  targetPort: 3306
+
+ingress:
+  enabled: false
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 1Gi

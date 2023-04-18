@@ -1,0 +1,4 @@
+apiVersion: v2
+name: web-app
+version: 0.1.0
+description: A Helm chart for the 3-tier web application

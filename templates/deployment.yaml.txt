@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}-deployment
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.nginx.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-nginx-container
+          image: {{ .Values.nginx.image.repository }}:{{ .Values.nginx.image.tag }}
+          ports:
+            - containerPort: 80
+        - name: {{ .Chart.Name }}-flask-container
+          image: {{ .Values.flask.image.repository }}:{{ .Values.flask.image.tag }}
+          ports:
+            - containerPort: 5000
+        - name: {{ .Chart.Name }}-mysql-container
+          image: {{ .Values.mysql.image.repository }}:{{ .Values.mysql.image.tag }}
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: password
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: mysql-pv-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}-service
+spec:
+  selector:
+    app: {{ .Chart.Name }}
+  ports:
+    - name: nginx
+      port: {{ .Values.nginx.service.port }}
+      targetPort: {{ .Values
