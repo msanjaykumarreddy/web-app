@@ -1,0 +1,231 @@
+
+UI
+----------------------------------
+FROM nginx:latest
+
+# Remove the default configuration file
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy the custom configuration file
+COPY nginx.conf /etc/nginx/conf.d/
+
+# Expose port 80 for HTTP traffic
+EXPOSE 80
+
+# Start NGINX server
+CMD ["nginx", "-g", "daemon off;"]
+------------------------------------
+
+Application tier.
+-----------------------------------
+
+FROM python:3.9
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the application code
+COPY app.py requirements.txt ./
+
+# Install the required packages
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose port 5000 for Flask traffic
+EXPOSE 5000
+
+# Start the Flask application
+CMD ["python", "app.py"]
+---------------------------------------
+Data base tier.
+
+---------------------------------------
+
+FROM python:3.9
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the application code
+COPY app.py requirements.txt ./
+
+# Install the required packages
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose port 5000 for Flask traffic
+EXPOSE 5000
+
+# Start the Flask application
+CMD ["python", "app.py"]
+--------------------------------------------
+----------------------------------------------
+Presentation tier (NGINX deployment file)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: <your-nginx-image>
+        ports:
+        - containerPort: 80
+
+------------------------------------------
+Application flask deploymnet
+----------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-deployment
+spec:
+  selector:
+    matchLabels:
+      app: flask
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: flask
+    spec:
+      containers:
+      - name: flask
+        image: <your-flask-image>
+        ports:
+        - containerPort: 5000
+-----------------------------------------------
+Database tier (MySQL deployment file)
+----------------------------------------------
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: <your-mysql-image>
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "root"
+        - name: MYSQL_DATABASE
+          value: "mydb"
+        ports:
+        - containerPort: 3306
+--------------------------------------
+Service file .
+--------------------------------------
+Presentation tier (NGINX service file)
+-------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
+---------------------------------------
+Application tier (Flask service file)
+---------------------------------------
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-service
+spec:
+  selector:
+    app: flask
+  ports:
+  - name: http
+    port: 5000
+    targetPort: 5000
+  type: ClusterIP
+---------------------------------------
+
+Database tier (MySQL service file)
+---------------------------------------
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+spec:
+  selector:
+    app: mysql
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  type: ClusterIP
+
+----------------------------------------
+
+
+----------------------------------------
+
+helm chart to created above service .
+
+-------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-service
+spec:
+  selector:
+    app: flask
+  ports:
+  - name: http
+    port: 5000
+    targetPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+spec:
+  selector:
+    app: mysql
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+--------------------------------------
+
+
+
